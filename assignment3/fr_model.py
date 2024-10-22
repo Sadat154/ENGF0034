@@ -4,7 +4,7 @@ from random import *
 import time
 from fr_settings import CANVAS_WIDTH, CANVAS_HEIGHT, GRID_SIZE, LOG_HEIGHT, Direction
 
-LEVEL_TIME = 120
+LEVEL_TIME = 45
 speed = 1.0
 
 class RiverObject():
@@ -53,6 +53,7 @@ class Turtle(RiverObject):
 
     def is_log(self):
         return False
+
 
     def is_sunk(self):
         return self.sunk;
@@ -263,8 +264,8 @@ class Model():
         # grid square)
         x = (spacing + GRID_SIZE)//2
         for i in range(0,6):
-            x = x + GRID_SIZE + spacing
             self.homes_x.append(x)
+            x = x + GRID_SIZE + spacing
             self.homes_occupied.append(False)
 
     def frog_is_home(self, home_num):
@@ -277,6 +278,7 @@ class Model():
         remaining_time = int(self.end_time - time.time())
         if remaining_time > 0:
             self.score = self.score + remaining_time
+
 
         #update view
         (x, y) = self.frog.get_position()
@@ -308,6 +310,7 @@ class Model():
         # register the function to call when we unpause
         self.unpause_function = unpause_function
 
+
     def check_pause(self):
         if time.time() > self.pause_end_time:
             self.paused = False
@@ -317,6 +320,8 @@ class Model():
             
     def new_life(self):
         self.controller.update_lives(self.lives)
+        self.frog.reset_position()
+
 
     def game_over(self):
         self.game_running = False
@@ -332,6 +337,12 @@ class Model():
     def next_level(self):
         self.level = self.level + 1
         self.reset_level()
+
+    def check_time(self):
+        remaining_time = int(self.end_time - time.time())
+        if remaining_time <= 0:
+            self.controller.game_over()
+            self.game_over()
 
     def reset_level(self):
         self.frogs_home = 0
@@ -368,7 +379,7 @@ class Model():
             # check if it's now on any other log
             for log in self.logs:
                 if log.contains(self.frog):
-                    on_long = log
+                    on_log = log
                     break
         if on_log is None:
             # frog is not on a log - it must be in the water
@@ -389,6 +400,7 @@ class Model():
     def check_frog_entering_home(self):
         # frog is attempting to enter home
         (x, y) = self.frog.get_position()
+        print(x,y)
         for i in range(0, 5):
             if abs(self.homes_x[i] - x) < GRID_SIZE/2 and not self.homes_occupied[i]:
                 #we're in a free home
@@ -402,7 +414,7 @@ class Model():
             return
         
         (x, y) = self.frog.get_position()
-        if x < 0 or x > CANVAS_WIDTH:
+        if x < 0 or x > CANVAS_WIDTH or y > CANVAS_HEIGHT:
             self.died()
             return
 
@@ -411,6 +423,7 @@ class Model():
             self.check_frog_crossing_road()
         elif y >= GRID_SIZE * 4 and y <= GRID_SIZE * 8:
             # frog is crossing the river
+
             self.check_frog_crossing_river()
         elif y == GRID_SIZE * 3:
             # frog is attempting to enter home
@@ -446,6 +459,7 @@ class Model():
             self.controller.update_score(self.score)
             self.check_frog()
             self.checkspeed()
+            self.check_time()
         elif self.paused:
             self.check_pause()
 
